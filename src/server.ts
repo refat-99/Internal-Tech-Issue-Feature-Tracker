@@ -33,6 +33,41 @@ app.get("/", async (req: Request, res: Response) => {
   });
 });
 
+
+// app.post("/", async (req: Request, res: Response) => {
+//         const {name, email, password,role} = req.body;
+//         res.status(200).json({
+//             message: "User created successfully",
+//             user: {
+//                 name,
+//                 email,
+//                 role
+//             }
+//         });
+//     });
+app.post("/", async (req: Request, res: Response) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO users (name, email, password, role)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, name, email, role`,
+      [name, email, password, role || "contributor"]
+    );
+
+    res.status(201).json({
+      message: "User created successfully",
+      user: result.rows[0],
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Database error",
+      error,
+    });
+  }
+});
+
 // Server Start
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
