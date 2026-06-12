@@ -1,74 +1,14 @@
-import express, {
-  type Request,
-  type Response,
-  type Application,
-} from "express";
-import { Pool } from "pg";
-import dotenv from "dotenv";
 
-dotenv.config();
+import app from './app';
+import config from './config';
+import { initDB } from './db';
 
-import config from "./config/db";
-
-const app: Application = express();
-
-// Middleware
-app.use(express.json());
-app.use(express.text());
-app.use(express.urlencoded({ extended: true }));
-
-// Database Connection
-const pool = new Pool({
-  connectionString: config.connection_string,
-});
-
-// Port
 const port = config.port || 5000;
-
-// Route
-app.get("/", async (req: Request, res: Response) => {
-  res.status(200).json({
-    message: "Issue Tracker Server is running!",
-    timestamp: new Date().toISOString(),
+const main = () =>{
+  initDB();
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
   });
-});
+}
 
-
-// app.post("/", async (req: Request, res: Response) => {
-//         const {name, email, password,role} = req.body;
-//         res.status(200).json({
-//             message: "User created successfully",
-//             user: {
-//                 name,
-//                 email,
-//                 role
-//             }
-//         });
-//     });
-app.post("/", async (req: Request, res: Response) => {
-  try {
-    const { name, email, password, role } = req.body;
-
-    const result = await pool.query(
-      `INSERT INTO users (name, email, password, role)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, role`,
-      [name, email, password, role || "contributor"]
-    );
-
-    res.status(201).json({
-      message: "User created successfully",
-      user: result.rows[0],
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Database error",
-      error,
-    });
-  }
-});
-
-// Server Start
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+main();
