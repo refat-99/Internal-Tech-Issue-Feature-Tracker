@@ -6,8 +6,7 @@ import express, {
 import dotenv from "dotenv";
 dotenv.config();
 import config from "./config";
-import { initDB, pool } from "./db";
-import { userSignupRoute } from "./modules/user/user.route";
+import router from "./modules/auth/auth.route";
 
 const app: Application = express();
 
@@ -20,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 // Route
 
 
-app.use('/api/signup', userSignupRoute);
+app.use('/api/auth', router);
 
 
 

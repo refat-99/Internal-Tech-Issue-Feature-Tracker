@@ -8,7 +8,8 @@ dotenv.config({
 const config = {
   connection_string: process.env.CONNECTIONSTRING as string,
   port: process.env.PORT,
-  secret : process.env.JWT_SECRET,
+  secret : process.env.JWT_SECRET as string,
+
    ssl: {
     rejectUnauthorized: false,
   },
