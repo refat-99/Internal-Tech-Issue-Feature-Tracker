@@ -1,12 +1,13 @@
 import jwt from "jsonwebtoken";
 
-const SECRET = "secret_key";
+const SECRET = process.env.JWT_SECRET as string;
 
-export const signToken = (payload: any) =>
-  jwt.sign(
-    payload, 
-    SECRET, 
-    { expiresIn: "7d" });
-
-export const verifyToken = (token: string) =>
-  jwt.verify(token, SECRET);
+export const signToken = (payload: object) => {
+  return jwt.sign(payload, SECRET, {
+    expiresIn: "7d",
+  });
+};
+console.log("JWT SECRET LOADED:", !!SECRET);
+export const verifyToken = (token: string) => {
+  return jwt.verify(token, SECRET);
+};

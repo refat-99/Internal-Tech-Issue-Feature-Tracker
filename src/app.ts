@@ -5,8 +5,9 @@ import express, {
 } from "express";
 import dotenv from "dotenv";
 dotenv.config();
-import config from "./config";
-import router from "./modules/auth/auth.route";
+import { issueRoute } from "./modules/issues/issue.route";
+import {authRoute}  from "./modules/auth/auth.route";
+
 
 const app: Application = express();
 
@@ -19,43 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 // Route
 
 
-app.use('/api/auth', router);
-
-
-
-// app.post("/", async (req: Request, res: Response) => {
-//         const {name, email, password,role} = req.body;
-//         res.status(200).json({
-//             message: "User created successfully",
-//             user: {
-//                 name,
-//                 email,
-//                 role
-//             }
-//         });
-//     });
-// app.post("/", async (req: Request, res: Response) => {
-//   try {
-//     const { name, email, password, role } = req.body;
-
-//     const result = await pool.query(
-//       `INSERT INTO users (name, email, password, role)
-//        VALUES ($1, $2, $3, $4)
-//        RETURNING id, name, email, role`,
-//       [name, email, password, role || "contributor"]
-//     );
-
-//     res.status(201).json({
-//       message: "User created successfully",
-//       user: result.rows[0],
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       message: "Database error",
-//       error,
-//     });
-//   }
-// });
+app.use('/api/auth', authRoute);
+app.use("/api/issues", issueRoute);
 
 
 export default app;

@@ -1,10 +1,8 @@
 import { pool } from "../../db/db";
-import jwt from "jsonwebtoken";
 import { signToken } from "../../utility/jwt";
 // import {comparePassword, hashPassword}  from "../../utility/bcrypt";
 import type { IUser } from "../../types/type";
-import bcrypt from "bcryptjs";
-import config from "../../config";
+import { hashPassword, matched } from "../../utility/bcrypt";
 
 
 export const signUpIntoDB = async (payload: IUser) => {
@@ -19,7 +17,7 @@ export const signUpIntoDB = async (payload: IUser) => {
     throw new Error("Email already exists");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await hashPassword(password);
   console.log(hashedPassword);
   //  const hashedPassword = await hashPassword(password);
   
@@ -55,39 +53,21 @@ export const logInintoDb = async (payload: IUser) => {
   }
 
   const user = result.rows[0];
-  console.log("USER FROM DB:", user);
+  const dbPassword = user.password;
 
-  // const isMatched = await comparePassword(password, user.password);
-  const isMatched = await bcrypt.compare(
-    password,
-    user.password
-  );
+//call and compare the password
+  const isMatched = matched(password, dbPassword);
 
   if (!isMatched) {
     throw new Error("Invalid credentials");
   }
-
-  // const token = (payload: any) =>
-  //   jwt.sign(
-  //     payload, 
-  //     SECRET, 
-  //     { expiresIn: "7d" });
-
-  // const token = signToken({
-  //   id: user.id,
-  //   email: user.email,
-  //   role: user.role,
-  // });
   const  jwtToken = {
     id: user.id,
     email: user.email,
     role: user.role,
   }
 
-  const accesstoken = jwt.sign(jwtToken,
-     config.secret, {
-     expiresIn: "7d" ,
-    });
+  const accesstoken = signToken(jwtToken);
 // console.log("Generated JWT:", accesstoken);
   return {
     accesstoken,
