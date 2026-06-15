@@ -1,0 +1,46 @@
+# 🚼 DevPulse – Internal Issue Tracker API
+
+A backend API for reporting bugs and feature requests with role-based access control.
+
+##  Tech Stack
+- Node.js + Express.js
+- TypeScript
+- PostgreSQL (raw SQL only)
+- JWT Authentication
+- bcrypt for password hashing
+
+## Roles
+- **contributor**: create, view, update own issues
+- **maintainer**: full access (update/delete any issue)
+
+##  Auth
+- JWT-based authentication
+- Token sent via `Authorization` header
+
+##Main Endpoints
+
+### Auth
+- POST `/api/auth/signup`
+- POST `/api/auth/login`
+
+### Issues
+- POST `/api/issues` (create issue)
+- GET `/api/issues` (get all issues)
+- GET `/api/issues/:id` (single issue)
+- PATCH `/api/issues/:id` (update issue)
+- DELETE `/api/issues/:id` (maintainer only)
+
+## Database
+- users
+- issues
+
+## Features
+- Role-based access control
+- Secure password hashing
+- JWT protected routes
+- Issue tracking workflow (open → in_progress → resolved)
+
+## ⚡ Setup
+```bash
+npm install
+npm run dev
