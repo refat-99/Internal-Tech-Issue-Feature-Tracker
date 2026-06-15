@@ -1,7 +1,8 @@
 import {pool} from "../../db/db";
+import type { IIssue, IUser } from "../../types/type";
 
 export const createIssue = async (
-  payload: any,
+  payload: IIssue,
   reporterId: number
 ) => {
   const { title, description, type } = payload;
@@ -130,7 +131,7 @@ export const getSingleIssue = async (
 export const updateIssue = async (
   id: number,
   payload: any,
-  currentUser: any
+  currentUser: IUser
 ) => {
   const issueResult = await pool.query(
     "SELECT * FROM issues WHERE id=$1",
@@ -161,12 +162,7 @@ export const updateIssue = async (
     }
   }
 
-  const {
-    title,
-    description,
-    type,
-    status,
-  } = payload;
+  const {title, description, type, status } = payload;
 
   const result = await pool.query(
     `
@@ -192,9 +188,7 @@ export const updateIssue = async (
   return result.rows[0];
 };
 
-export const deleteIssue = async (
-  id: number
-) => {
+export const deleteIssue = async (id: number) => {
   const result = await pool.query(
     `
     DELETE FROM issues

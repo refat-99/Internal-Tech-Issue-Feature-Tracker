@@ -1,5 +1,6 @@
 import type{ Request, Response } from "express";
 import { signUpIntoDB,logInintoDb } from "./auth.service";
+import sendResponse from "../../utility/sendResponse";
 
 export const signupController = async (
   req: Request,
@@ -8,16 +9,17 @@ export const signupController = async (
   try {
     const result = await signUpIntoDB(req.body);
 
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      data: result,
-    });
+  sendResponse(res,{
+  statusCode: 201,
+  success: true,
+  message: "User registered successfully",
+    })
   } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: error.message,
-    });
+    sendResponse(res, {
+    statusCode: 400,
+    success: false,
+    message: error.message,
+  });
   }
 };
 
@@ -28,13 +30,15 @@ export const loginController = async (
   try {
     const result = await logInintoDb(req.body);
 
-    res.status(200).json({
+    sendResponse(res, {
+      statusCode: 200,
       success: true,
       message: "Login successful",
       data: result,
     });
   } catch (error: any) {
-    res.status(400).json({
+    sendResponse(res, {
+      statusCode: 400,
       success: false,
       message: error.message,
     });

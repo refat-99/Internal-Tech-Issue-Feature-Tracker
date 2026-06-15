@@ -27,19 +27,3 @@ router.delete(
 );
 
 export const issueRoute = router;
-
-
-
-
-// import express from "express";
-// import type{ Request, Response } from "express";
-// const router = express.Router();
-
-
-// router.get("/", getAllIssuesController);
-
-// router.get("/", (req: Request, res: Response) => {
-//   res.send("Issue route is working");
-// });
-
-// // router.post("/", authMiddleware, createIssueController);
