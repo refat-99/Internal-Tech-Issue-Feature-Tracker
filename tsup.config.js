@@ -8,13 +8,5 @@ export default defineConfig({
     sourcemap: true,
     clean: true,
     bundle: true,
-    // cjs dependences 
-    banner: {
-        js: `
-    import { createRequire } from "module";
-    const require = createRequire(import.meta.url); 
-    
-    `
-    }
 });
 //# sourceMappingURL=tsup.config.js.map

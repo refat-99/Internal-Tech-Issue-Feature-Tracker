@@ -1,5 +1,5 @@
-import { pool } from "../../db/db";
-import { signToken } from "../../utility/jwt";
+import { pool } from "../../db/db.js";
+import { signToken } from "../../utility/jwt.js";
 // import {comparePassword, hashPassword}  from "../../utility/bcrypt";
 import type { IUser } from "../../types/type";
 import { hashPassword, matched } from "../../utility/bcrypt";

@@ -1,4 +1,4 @@
-import {pool} from "../../db/db";
+import { pool } from "../../db/db";
 import type { IIssue, IUser } from "../../types/type";
 
 export const createIssue = async (

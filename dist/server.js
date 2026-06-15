@@ -8,7 +8,7 @@
 import express3 from "express";
 import dotenv2 from "dotenv";
 
-// src/modules/issues/issue.route.ts
+// src/modules/auth/auth.route.ts
 import express from "express";
 
 // src/db/db.ts
@@ -61,6 +61,147 @@ var initDB = async () => {
     console.log(error);
   }
 };
+
+// src/utility/jwt.ts
+import jwt from "jsonwebtoken";
+var SECRET = process.env.JWT_SECRET;
+var signToken = (payload) => {
+  return jwt.sign(payload, SECRET, {
+    expiresIn: "7d"
+  });
+};
+console.log("JWT SECRET LOADED:", !!SECRET);
+var verifyToken = (token) => {
+  return jwt.verify(token, SECRET);
+};
+
+// src/utility/bcrypt.ts
+import bcrypt from "bcrypt";
+var hashPassword = async (password) => {
+  return await bcrypt.hash(password, 10);
+};
+var matched = async (password, dbPassword) => {
+  console.log("INPUT PASSWORD:", password);
+  console.log("DB PASSWORD:", dbPassword);
+  return await bcrypt.compare(password, dbPassword);
+};
+
+// src/modules/auth/auth.service.ts
+var signUpIntoDB = async (payload) => {
+  const { name, email, password, role } = payload;
+  const existingUser = await pool.query(
+    "SELECT * FROM users WHERE email=$1",
+    [email]
+  );
+  if (existingUser.rowCount) {
+    throw new Error("Email already exists");
+  }
+  const hashedPassword = await hashPassword(password);
+  console.log(hashedPassword);
+  const result = await pool.query(
+    `
+      INSERT INTO users
+      (name,email,password,role)
+      VALUES ($1,$2,$3,$4)
+      RETURNING *
+    `,
+    [
+      name,
+      email,
+      hashedPassword,
+      role || "contributor"
+    ]
+  );
+  delete result.rows[0].password;
+  return result.rows[0];
+};
+var logInintoDb = async (payload) => {
+  const { email, password } = payload;
+  const result = await pool.query(
+    "SELECT * FROM users WHERE email=$1",
+    [email]
+  );
+  if (result.rows.length === 0) {
+    throw new Error("Invalid credentials");
+  }
+  const user = result.rows[0];
+  const dbPassword = user.password;
+  const isMatched = matched(password, dbPassword);
+  if (!isMatched) {
+    throw new Error("Invalid credentials");
+  }
+  const jwtToken = {
+    id: user.id,
+    email: user.email,
+    role: user.role
+  };
+  const accesstoken = signToken(jwtToken);
+  return {
+    accesstoken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    }
+  };
+};
+
+// src/utility/sendResponse.ts
+var sendResponse = (res, data) => {
+  res.status(data.statusCode).json({
+    success: data.success,
+    message: data.message,
+    data: data.data
+  });
+};
+var sendResponse_default = sendResponse;
+
+// src/modules/auth/auth.controller.ts
+var signupController = async (req, res) => {
+  try {
+    const result = await signUpIntoDB(req.body);
+    sendResponse_default(res, {
+      statusCode: 201,
+      success: true,
+      message: "User registered successfully"
+    });
+  } catch (error) {
+    sendResponse_default(res, {
+      statusCode: 400,
+      success: false,
+      message: error.message
+    });
+  }
+};
+var loginController = async (req, res) => {
+  try {
+    const result = await logInintoDb(req.body);
+    sendResponse_default(res, {
+      statusCode: 200,
+      success: true,
+      message: "Login successful",
+      data: result
+    });
+  } catch (error) {
+    sendResponse_default(res, {
+      statusCode: 400,
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// src/modules/auth/auth.route.ts
+var router = express.Router();
+router.post("/signup", signupController);
+router.post("/login", loginController);
+var authRoute = router;
+
+// src/modules/issues/issue.route.ts
+import express2 from "express";
 
 // src/modules/issues/issue.service.ts
 var createIssue = async (payload, reporterId) => {
@@ -217,16 +358,6 @@ var deleteIssue = async (id) => {
   return result.rows[0];
 };
 
-// src/utility/sendResponse.ts
-var sendResponse = (res, data) => {
-  res.status(data.statusCode).json({
-    success: data.success,
-    message: data.message,
-    data: data.data
-  });
-};
-var sendResponse_default = sendResponse;
-
 // src/modules/issues/issue.controller.ts
 var createIssueController = async (req, res) => {
   try {
@@ -324,19 +455,6 @@ var deleteIssueController = async (req, res) => {
   }
 };
 
-// src/utility/jwt.ts
-import jwt from "jsonwebtoken";
-var SECRET = process.env.JWT_SECRET;
-var signToken = (payload) => {
-  return jwt.sign(payload, SECRET, {
-    expiresIn: "7d"
-  });
-};
-console.log("JWT SECRET LOADED:", !!SECRET);
-var verifyToken = (token) => {
-  return jwt.verify(token, SECRET);
-};
-
 // src/middlewares/auth.middleware.ts
 var authMiddleware = (req, res, next) => {
   try {
@@ -358,7 +476,6 @@ var authMiddleware = (req, res, next) => {
     });
   }
 };
-var auth_middleware_default = authMiddleware;
 
 // src/middlewares/role.middleware.ts
 var roleMiddleware = (role) => (req, res, next) => {
@@ -372,136 +489,18 @@ var roleMiddleware = (role) => (req, res, next) => {
 };
 
 // src/modules/issues/issue.route.ts
-var router = express.Router();
-router.post("/create", auth_middleware_default, createIssueController);
-router.get("/", getAllIssuesController);
-router.get("/:id", getSingleIssueController);
-router.patch("/:id", auth_middleware_default, updateIssueController);
-router.delete(
+var router2 = express2.Router();
+router2.post("/create", authMiddleware, createIssueController);
+router2.get("/", getAllIssuesController);
+router2.get("/:id", getSingleIssueController);
+router2.patch("/:id", authMiddleware, updateIssueController);
+router2.delete(
   "/:id",
-  auth_middleware_default,
+  authMiddleware,
   roleMiddleware("maintainer"),
   deleteIssueController
 );
-var issueRoute = router;
-
-// src/modules/auth/auth.route.ts
-import express2 from "express";
-
-// src/utility/bcrypt.ts
-import bcrypt from "bcrypt";
-var hashPassword = async (password) => {
-  return await bcrypt.hash(password, 10);
-};
-var matched = async (password, dbPassword) => {
-  console.log("INPUT PASSWORD:", password);
-  console.log("DB PASSWORD:", dbPassword);
-  return await bcrypt.compare(password, dbPassword);
-};
-
-// src/modules/auth/auth.service.ts
-var signUpIntoDB = async (payload) => {
-  const { name, email, password, role } = payload;
-  const existingUser = await pool.query(
-    "SELECT * FROM users WHERE email=$1",
-    [email]
-  );
-  if (existingUser.rowCount) {
-    throw new Error("Email already exists");
-  }
-  const hashedPassword = await hashPassword(password);
-  console.log(hashedPassword);
-  const result = await pool.query(
-    `
-      INSERT INTO users
-      (name,email,password,role)
-      VALUES ($1,$2,$3,$4)
-      RETURNING *
-    `,
-    [
-      name,
-      email,
-      hashedPassword,
-      role || "contributor"
-    ]
-  );
-  delete result.rows[0].password;
-  return result.rows[0];
-};
-var logInintoDb = async (payload) => {
-  const { email, password } = payload;
-  const result = await pool.query(
-    "SELECT * FROM users WHERE email=$1",
-    [email]
-  );
-  if (result.rows.length === 0) {
-    throw new Error("Invalid credentials");
-  }
-  const user = result.rows[0];
-  const dbPassword = user.password;
-  const isMatched = matched(password, dbPassword);
-  if (!isMatched) {
-    throw new Error("Invalid credentials");
-  }
-  const jwtToken = {
-    id: user.id,
-    email: user.email,
-    role: user.role
-  };
-  const accesstoken = signToken(jwtToken);
-  return {
-    accesstoken,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      created_at: user.created_at,
-      updated_at: user.updated_at
-    }
-  };
-};
-
-// src/modules/auth/auth.controller.ts
-var signupController = async (req, res) => {
-  try {
-    const result = await signUpIntoDB(req.body);
-    sendResponse_default(res, {
-      statusCode: 201,
-      success: true,
-      message: "User registered successfully"
-    });
-  } catch (error) {
-    sendResponse_default(res, {
-      statusCode: 400,
-      success: false,
-      message: error.message
-    });
-  }
-};
-var loginController = async (req, res) => {
-  try {
-    const result = await logInintoDb(req.body);
-    sendResponse_default(res, {
-      statusCode: 200,
-      success: true,
-      message: "Login successful",
-      data: result
-    });
-  } catch (error) {
-    sendResponse_default(res, {
-      statusCode: 400,
-      success: false,
-      message: error.message
-    });
-  }
-};
-
-// src/modules/auth/auth.route.ts
-var router2 = express2.Router();
-router2.post("/signup", signupController);
-router2.post("/login", loginController);
-var authRoute = router2;
+var issueRoute = router2;
 
 // src/app.ts
 dotenv2.config();
@@ -509,6 +508,16 @@ var app = express3();
 app.use(express3.json());
 app.use(express3.text());
 app.use(express3.urlencoded({ extended: true }));
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Internal Issue Tracker API is running"
+  });
+});
+app.use((req, res, next) => {
+  console.log("HIT:", req.method, req.url);
+  next();
+});
 app.use("/api/auth", authRoute);
 app.use("/api/issues", issueRoute);
 var app_default = app;

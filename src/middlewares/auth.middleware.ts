@@ -2,7 +2,7 @@
 import type{ Request, Response, NextFunction } from "express";
  import { verifyToken } from "../utility/jwt";
 
-const authMiddleware = (req: any, res: Response, next: NextFunction) => {
+export const authMiddleware = (req: any, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -28,5 +28,3 @@ const authMiddleware = (req: any, res: Response, next: NextFunction) => {
     });
   }
 };
-
-export default authMiddleware ;

@@ -6,7 +6,7 @@ import {
   updateIssueController,
   deleteIssueController,
 } from "./issue.controller";
-import authMiddleware from "../../middlewares/auth.middleware";
+import {authMiddleware} from "../../middlewares/auth.middleware";
 import { roleMiddleware } from "../../middlewares/role.middleware";
 
 const router = express.Router();
