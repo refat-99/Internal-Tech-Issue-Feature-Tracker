@@ -18,6 +18,12 @@ app.use(express.urlencoded({ extended: true }));
 
 
 // Route
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: " Internal Issue Tracker API is running",
+  });
+});
 
 
 app.use('/api/auth', authRoute);

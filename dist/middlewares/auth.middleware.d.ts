@@ -1,4 +1,0 @@
-import type { Response, NextFunction } from "express";
-declare const authMiddleware: (req: any, res: Response, next: NextFunction) => Response<any, Record<string, any>> | undefined;
-export default authMiddleware;
-//# sourceMappingURL=auth.middleware.d.ts.map
